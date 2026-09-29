@@ -1,12 +1,15 @@
-# TEPERA Browser Web App
+# TEPERA Browser
 
-تم تقسيم الكود الأصلي إلى هيكل تطبيق ويب بسيط.
+مشروع ويب بنفس طريقة APKDroid: صفحة الغلاف في `index.html`، التنسيق في `src/styles/app.css`، ومنطق التطبيق في `src/app.js`، مع `manifest.json` وService Worker للأيقونات والتثبيت.
 
-- `index.html` نقطة الدخول
-- `src/app.jsx` يحتوي واجهة HTML والمنطق الأصلي
-- `src/styles/app.css` يحتوي CSS الأصلي
-- `manifest.json` إعدادات Web App
-- `sw.js` Service Worker بسيط
-- `res/icons/icon.png` أيقونة التطبيق
+ألوان شعار TS هي نفس ألوان شريط البحث: T أخضر `#34A853` و S أصفر `#FBBC05` على خلفية رمادية.
 
-لتشغيله عبر Vite: ثبّت الاعتماديات ثم شغّل `npm run dev`.
+## التشغيل
+
+```
+python3 -m http.server 8080
+```
+
+ثم افتح http://localhost:8080
+
+يمكن تثبيته كتطبيق من المتصفح (Add to Home Screen) لأن الملف `manifest.json` والأيقونات جاهزة.

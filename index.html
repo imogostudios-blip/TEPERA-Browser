@@ -4,12 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#131313" />
-  <link rel="icon" href="/favicon.png" />
-  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="./favicon.png" />
+  <link rel="manifest" href="./manifest.json" />
   <title>TEPERA Browser</title>
+  
+  <!-- مكتبات تشغيل React و Babel -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
   <div id="app"></div>
-  <script type="module" src="/src/app.jsx"></script>
+  <script type="text/babel" src="./src/app.jsx"></script>
 </body>
 </html>

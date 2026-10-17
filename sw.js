@@ -1,4 +1,4 @@
-const CACHE = 'tepera-v1';
+const CACHE = 'tepera-v2';
 const APP_SHELL = [
   './',
   './index.html',

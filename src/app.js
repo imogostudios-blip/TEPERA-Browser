@@ -225,19 +225,85 @@
                 }
 
                 event.preventDefault();
-                window.open(finalUrl, '_blank');
+                if (isIframeTunnelEnabled()) {
+                    openIframeBrowser(finalUrl);
+                } else {
+                    window.open(finalUrl, '_blank');
+                }
             } else {
                 event.preventDefault();
                 const cfg = searchEngineConfig[currentSearchEngine] || searchEngineConfig['google'];
                 const q = encodeURIComponent(input);
                 const searchUrl = cfg.url + (cfg.url.indexOf('?') > -1 ? '&' : '?') + cfg.param + '=' + q;
-                window.open(searchUrl, '_blank');
+                if (isIframeTunnelEnabled()) {
+                    openIframeBrowser(searchUrl);
+                } else {
+                    window.open(searchUrl, '_blank');
+                }
             }
         }
 
         function showTopLoader() {
             document.getElementById('topLoader').classList.add('active');
         }
+
+        // ========== Iframe Browser View ==========
+        function openIframeBrowser(url) {
+            let view = document.getElementById('iframeBrowserView');
+            if (!view) {
+                view = document.createElement('div');
+                view.id = 'iframeBrowserView';
+                view.className = 'iframe-browser-view';
+                view.innerHTML = `
+                    <div class="iframe-top-bar">
+                        <button class="iframe-dots-btn" onclick="toggleMenu()" aria-label="القائمة">
+                            <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>
+                        </button>
+                        <button class="iframe-tabs-btn" aria-label="التبويبات">
+                            <svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                            <span class="tabs-count">1</span>
+                        </button>
+                        <div class="iframe-address-pill" id="iframeAddressPill">
+                            <span class="address-text" id="iframeAddressText"></span>
+                        </div>
+                        <button class="iframe-home-btn" onclick="closeIframeBrowser()" aria-label="الرئيسية">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z"/></svg>
+                        </button>
+                    </div>
+                    <iframe id="browserIframe" class="browser-iframe" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>
+                `;
+                document.body.appendChild(view);
+            }
+            const iframe = document.getElementById('browserIframe');
+            const addressText = document.getElementById('iframeAddressText');
+            // Display shortened URL
+            let displayUrl = url.replace(/^https?:\/\//, '').replace(/^www\./, '');
+            if (displayUrl.length > 40) displayUrl = displayUrl.substring(0, 37) + '...';
+            addressText.textContent = displayUrl;
+            addressText.title = url;
+            iframe.src = url;
+            view.classList.add('active');
+            document.body.classList.add('iframe-mode');
+            setTimeout(() => {
+                document.getElementById('topLoader')?.classList.remove('active');
+            }, 800);
+            // Hide main content somewhat
+            document.querySelector('.main-container')?.style.setProperty('display', 'none');
+            document.getElementById('floatingSearchBar')?.style.setProperty('display', 'none');
+        }
+
+        function closeIframeBrowser() {
+            const view = document.getElementById('iframeBrowserView');
+            if (view) {
+                view.classList.remove('active');
+                const iframe = document.getElementById('browserIframe');
+                if (iframe) iframe.src = 'about:blank';
+            }
+            document.body.classList.remove('iframe-mode');
+            document.querySelector('.main-container')?.style.setProperty('display', '');
+            document.getElementById('floatingSearchBar')?.style.setProperty('display', '');
+        }
+
 
         window.addEventListener('scroll', function() {
             var scrollPos = window.scrollY || document.documentElement.scrollTop;
@@ -633,6 +699,12 @@
         }
         function setSHED(val) {
             localStorage.setItem('teperaSHED', val ? 'true' : 'false');
+        }
+        function isIframeTunnelEnabled() {
+            return localStorage.getItem('teperaIframeTunnel') === 'true';
+        }
+        function setIframeTunnel(val) {
+            localStorage.setItem('teperaIframeTunnel', val ? 'true' : 'false');
         }
 
         function normalizeUrl(u) {
@@ -1151,9 +1223,24 @@
             };
             list.appendChild(item);
 
+            // New iframe tunnel setting
+            const iframeItem = document.createElement('button');
+            iframeItem.className = 'settings-item';
+            const iframeEnabled = isIframeTunnelEnabled();
+            iframeItem.innerHTML = '<svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"></path></svg>' +
+                '<span class="item-label">تمرير عبر نفق iframe</span>' +
+                '<div class="toggle-switch ' + (iframeEnabled ? 'on' : '') + '" id="iframeTunnelToggle"></div>';
+            iframeItem.onclick = function() {
+                const newVal = !isIframeTunnelEnabled();
+                setIframeTunnel(newVal);
+                const t = document.getElementById('iframeTunnelToggle');
+                if (t) t.classList.toggle('on', newVal);
+            };
+            list.appendChild(iframeItem);
+
             const desc = document.createElement('div');
             desc.style.cssText = 'padding:16px 24px;font-size:14px;color:var(--snippet-color);line-height:1.6;';
-            desc.innerHTML = 'عند التفعيل: إذا كتبت في شريط البحث اسم موقع فقط (مثل youtube أو google) بدون https://، سيتم تحويله تلقائياً إلى رابط ويفتح الموقع مباشرة.<br><br>مثال: كتابة "youtube" → يفتح https://youtube.com';
+            desc.innerHTML = 'عند التفعيل: إذا كتبت في شريط البحث اسم موقع فقط (مثل youtube أو google) بدون https://، سيتم تحويله تلقائياً إلى رابط ويفتح الموقع مباشرة.<br><br>مثال: كتابة "youtube" → يفتح https://youtube.com<br><br><b>تمرير عبر نفق iframe:</b> عند التفعيل، يتم فتح نتائج البحث والمواقع داخل iframe مع شريط عناوين علوي مطابق للصورة.';
             list.appendChild(desc);
             container.appendChild(list);
         }

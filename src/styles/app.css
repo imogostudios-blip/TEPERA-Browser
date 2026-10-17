@@ -148,6 +148,7 @@
         }
 
         .sidebar-overlay {
+            z-index: 2099;
             position: fixed;
             top: 0;
             left: 0;
@@ -165,6 +166,7 @@
         }
 
         .side-menu {
+            z-index: 2100;
             position: fixed;
             top: 6px;
             left: 6px;
@@ -202,6 +204,7 @@
         }
 
         [data-theme="light"] .side-menu {
+            z-index: 2100;
             background: rgba(255,255,255,0.78);
             color: #131313;
             border-color: rgba(255,255,255,0.55);
@@ -1471,3 +1474,110 @@
             color: #888;
             margin-top: 10px;
         }
+
+/* ========== Iframe Browser View ========== */
+.iframe-browser-view {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-color);
+    z-index: 2000;
+    display: none;
+    flex-direction: column;
+}
+.iframe-browser-view.active {
+    display: flex;
+}
+
+.iframe-top-bar {
+    display: flex;
+    align-items: center;
+    height: 56px;
+    padding: 0 8px;
+    background: #202124;
+    gap: 4px;
+    flex-shrink: 0;
+    border-bottom: 1px solid #3c4043;
+}
+
+.iframe-dots-btn,
+.iframe-tabs-btn,
+.iframe-home-btn {
+    background: transparent;
+    border: none;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 8px;
+    color: #e3e3e3;
+    flex-shrink: 0;
+    padding: 0;
+}
+.iframe-dots-btn:hover,
+.iframe-tabs-btn:hover,
+.iframe-home-btn:hover {
+    background: rgba(255,255,255,0.08);
+}
+.iframe-dots-btn svg,
+.iframe-tabs-btn svg,
+.iframe-home-btn svg {
+    width: 24px;
+    height: 24px;
+    fill: #e3e3e3;
+}
+.iframe-tabs-btn {
+    position: relative;
+}
+.iframe-tabs-btn svg {
+    stroke: #e3e3e3;
+    fill: none;
+}
+.tabs-count {
+    position: absolute;
+    font-size: 11px;
+    font-weight: 600;
+    color: #e3e3e3;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.iframe-address-pill {
+    flex: 1;
+    height: 36px;
+    background: #3c4043;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    margin: 0 6px;
+    overflow: hidden;
+    min-width: 0;
+}
+.address-text {
+    color: #e8eaed;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    direction: ltr;
+    text-align: left;
+}
+
+.browser-iframe {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: white;
+}
+
+body.iframe-mode {
+    overflow: hidden;
+}

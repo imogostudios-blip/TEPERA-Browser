@@ -247,7 +247,11 @@
             document.getElementById('topLoader').classList.add('active');
         }
 
-        // ========== Iframe Browser View ==========
+        // ========== Iframe Browser View (Multi-tab) ==========
+        let browserTabs = [];
+        let activeTabId = 0;
+        let nextTabId = 1;
+
         function openIframeBrowser(url) {
             let view = document.getElementById('iframeBrowserView');
             if (!view) {
@@ -259,37 +263,190 @@
                         <button class="iframe-dots-btn" onclick="toggleMenu()" aria-label="القائمة">
                             <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>
                         </button>
-                        <button class="iframe-tabs-btn" aria-label="التبويبات">
+                        <button class="iframe-tabs-btn" onclick="toggleTabsOverview()" aria-label="التبويبات">
                             <svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
-                            <span class="tabs-count">1</span>
+                            <span class="tabs-count" id="tabsCount">1</span>
                         </button>
-                        <div class="iframe-address-pill" id="iframeAddressPill">
+                        <div class="iframe-address-pill" id="iframeAddressPill" onclick="startEditAddress()">
                             <span class="address-text" id="iframeAddressText"></span>
+                            <input class="iframe-address-input" id="iframeAddressInput" style="display:none;" />
                         </div>
                         <button class="iframe-home-btn" onclick="closeIframeBrowser()" aria-label="الرئيسية">
                             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z"/></svg>
                         </button>
                     </div>
+                    <div class="tabs-overview" id="tabsOverview">
+                        <div class="tabs-overview-header">
+                            <div class="tabs-overview-title">علامات التبويب</div>
+                        </div>
+                        <div class="tabs-list" id="tabsList"></div>
+                        <button class="new-tab-btn" onclick="createNewTab()">+ علامة تبويب جديدة</button>
+                    </div>
                     <iframe id="browserIframe" class="browser-iframe" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>
                 `;
                 document.body.appendChild(view);
+
+                // Address input events
+                const addrInput = document.getElementById('iframeAddressInput');
+                addrInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        navigateToAddress(this.value);
+                    } else if (e.key === 'Escape') {
+                        cancelEditAddress();
+                    }
+                });
+                addrInput.addEventListener('blur', function() {
+                    setTimeout(cancelEditAddress, 150);
+                });
             }
-            const iframe = document.getElementById('browserIframe');
-            const addressText = document.getElementById('iframeAddressText');
-            // Display shortened URL
-            let displayUrl = url.replace(/^https?:\/\//, '').replace(/^www\./, '');
-            if (displayUrl.length > 40) displayUrl = displayUrl.substring(0, 37) + '...';
-            addressText.textContent = displayUrl;
-            addressText.title = url;
-            iframe.src = url;
+
+            // Add or update tab
+            const tabId = nextTabId++;
+            browserTabs.push({ id: tabId, url: url, title: getShortTitle(url) });
+            activeTabId = tabId;
+            updateTabsUI();
+            loadTab(tabId);
+
             view.classList.add('active');
             document.body.classList.add('iframe-mode');
+            // Push history so back button returns to main page instead of leaving the app
+            if (!history.state || history.state.mode !== 'iframe') {
+                history.pushState({ mode: 'iframe', url: url }, '', '#view');
+            }
             setTimeout(() => {
                 document.getElementById('topLoader')?.classList.remove('active');
             }, 800);
-            // Hide main content somewhat
             document.querySelector('.main-container')?.style.setProperty('display', 'none');
             document.getElementById('floatingSearchBar')?.style.setProperty('display', 'none');
+        }
+
+        function getShortTitle(url) {
+            try {
+                const u = new URL(url);
+                return u.hostname.replace(/^www\./, '') || url;
+            } catch(e) {
+                return url.replace(/^https?:\/\//, '').split('/')[0] || url;
+            }
+        }
+
+        function loadTab(tabId) {
+            const tab = browserTabs.find(t => t.id === tabId);
+            if (!tab) return;
+            activeTabId = tabId;
+            const iframe = document.getElementById('browserIframe');
+            const addressText = document.getElementById('iframeAddressText');
+            if (iframe) iframe.src = tab.url;
+            if (addressText) {
+                let displayUrl = tab.url.replace(/^https?:\/\//, '').replace(/^www\./, '');
+                if (displayUrl.length > 45) displayUrl = displayUrl.substring(0, 42) + '...';
+                addressText.textContent = displayUrl;
+                addressText.title = tab.url;
+            }
+            updateTabsUI();
+        }
+
+        function updateTabsUI() {
+            const countEl = document.getElementById('tabsCount');
+            if (countEl) countEl.textContent = browserTabs.length || 1;
+            const list = document.getElementById('tabsList');
+            if (!list) return;
+            list.innerHTML = '';
+            browserTabs.forEach(tab => {
+                const item = document.createElement('div');
+                item.className = 'tab-item' + (tab.id === activeTabId ? ' active-tab' : '');
+                item.innerHTML = '<span class="tab-title">' + (tab.title || 'تبويب') + '</span>' +
+                    '<button class="tab-close" onclick="event.stopPropagation(); closeTab(' + tab.id + ')">×</button>';
+                item.onclick = function() {
+                    loadTab(tab.id);
+                    toggleTabsOverview(false);
+                };
+                list.appendChild(item);
+            });
+        }
+
+        function toggleTabsOverview(force) {
+            const ov = document.getElementById('tabsOverview');
+            if (!ov) return;
+            if (force === false) {
+                ov.classList.remove('active');
+            } else if (force === true) {
+                ov.classList.add('active');
+                updateTabsUI();
+            } else {
+                ov.classList.toggle('active');
+                if (ov.classList.contains('active')) updateTabsUI();
+            }
+        }
+
+        function createNewTab() {
+            const tabId = nextTabId++;
+            const defaultUrl = 'https://www.google.com';
+            browserTabs.push({ id: tabId, url: defaultUrl, title: 'Google' });
+            activeTabId = tabId;
+            loadTab(tabId);
+            toggleTabsOverview(false);
+            setTimeout(() => startEditAddress(), 100);
+        }
+
+        function closeTab(tabId) {
+            browserTabs = browserTabs.filter(t => t.id !== tabId);
+            if (browserTabs.length === 0) {
+                closeIframeBrowser();
+                return;
+            }
+            if (activeTabId === tabId) {
+                activeTabId = browserTabs[browserTabs.length - 1].id;
+                loadTab(activeTabId);
+            }
+            updateTabsUI();
+        }
+
+        function startEditAddress() {
+            const pill = document.getElementById('iframeAddressPill');
+            const text = document.getElementById('iframeAddressText');
+            const input = document.getElementById('iframeAddressInput');
+            if (!pill || !input) return;
+            const tab = browserTabs.find(t => t.id === activeTabId);
+            input.value = tab ? tab.url : '';
+            text.style.display = 'none';
+            input.style.display = 'block';
+            pill.classList.add('editing');
+            input.focus();
+            input.select();
+        }
+
+        function cancelEditAddress() {
+            const pill = document.getElementById('iframeAddressPill');
+            const text = document.getElementById('iframeAddressText');
+            const input = document.getElementById('iframeAddressInput');
+            if (!pill || !input) return;
+            input.style.display = 'none';
+            text.style.display = 'block';
+            pill.classList.remove('editing');
+        }
+
+        function navigateToAddress(raw) {
+            let url = (raw || '').trim();
+            if (!url) return;
+            // Reuse search logic roughly
+            if (url.indexOf(' ') === -1 && url.indexOf('.') > 0 && url.indexOf('http') !== 0) {
+                url = 'https://' + url;
+            } else if (url.indexOf('http') !== 0 && url.indexOf('.') === -1) {
+                // Search
+                const cfg = searchEngineConfig[currentSearchEngine] || searchEngineConfig['google'];
+                const q = encodeURIComponent(url);
+                url = cfg.url + (cfg.url.indexOf('?') > -1 ? '&' : '?') + cfg.param + '=' + q;
+            } else if (url.indexOf('http') !== 0) {
+                url = 'https://' + url;
+            }
+            const tab = browserTabs.find(t => t.id === activeTabId);
+            if (tab) {
+                tab.url = url;
+                tab.title = getShortTitle(url);
+            }
+            cancelEditAddress();
+            loadTab(activeTabId);
         }
 
         function closeIframeBrowser() {
@@ -298,11 +455,41 @@
                 view.classList.remove('active');
                 const iframe = document.getElementById('browserIframe');
                 if (iframe) iframe.src = 'about:blank';
+                const ov = document.getElementById('tabsOverview');
+                if (ov) ov.classList.remove('active');
             }
+            browserTabs = [];
+            activeTabId = 0;
             document.body.classList.remove('iframe-mode');
             document.querySelector('.main-container')?.style.setProperty('display', '');
             document.getElementById('floatingSearchBar')?.style.setProperty('display', '');
+            // If we pushed a state, go back so the URL returns to the main page
+            if (history.state && history.state.mode === 'iframe') {
+                history.back();
+            } else if (location.hash === '#view') {
+                history.replaceState(null, '', location.pathname + location.search);
+            }
         }
+
+
+
+        // Handle browser back button to return to main page
+        window.addEventListener('popstate', function(e) {
+            const view = document.getElementById('iframeBrowserView');
+            if (view && view.classList.contains('active')) {
+                // User pressed back, close the iframe view
+                view.classList.remove('active');
+                const iframe = document.getElementById('browserIframe');
+                if (iframe) iframe.src = 'about:blank';
+                const ov = document.getElementById('tabsOverview');
+                if (ov) ov.classList.remove('active');
+                browserTabs = [];
+                activeTabId = 0;
+                document.body.classList.remove('iframe-mode');
+                document.querySelector('.main-container')?.style.setProperty('display', '');
+                document.getElementById('floatingSearchBar')?.style.setProperty('display', '');
+            }
+        });
 
 
         window.addEventListener('scroll', function() {
@@ -368,7 +555,8 @@
             'google': { url: 'https://www.google.com/search', param: 'q' },
             'yahoo': { url: 'https://search.yahoo.com/search', param: 'p' },
             'facebook': { url: 'https://www.facebook.com/search/top/', param: 'q' },
-            'youtube': { url: 'https://www.youtube.com/results', param: 'search_query' }
+            'youtube': { url: 'https://www.youtube.com/results', param: 'search_query' },
+            'duckduckgo': { url: 'https://duckduckgo.com/', param: 'q' }
         };
 
         function setSearchEngine(engine) {
@@ -396,7 +584,8 @@
                 { key: 'google', label: 'Google' },
                 { key: 'yahoo', label: 'Yahoo' },
                 { key: 'facebook', label: 'Facebook' },
-                { key: 'youtube', label: 'YouTube' }
+                { key: 'youtube', label: 'YouTube' },
+                { key: 'duckduckgo', label: 'DuckDuckGo' }
             ];
 
             engines.forEach(item => {

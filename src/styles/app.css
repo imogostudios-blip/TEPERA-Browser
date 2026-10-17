@@ -166,7 +166,6 @@
         }
 
         .side-menu {
-            z-index: 2100;
             position: fixed;
             top: 6px;
             left: 6px;
@@ -176,7 +175,7 @@
             max-height: calc(100vh - 12px);
             background: rgba(40, 40, 42, 0.72);
             color: #f1f1f1;
-            z-index: 1003;
+            z-index: 5000;
             box-shadow:
                 0 10px 28px rgba(0,0,0,0.36),
                 0 0 18px rgba(0,74,119,0.22);
@@ -1483,7 +1482,7 @@
     width: 100%;
     height: 100%;
     background: var(--bg-color);
-    z-index: 2000;
+    z-index: 3000;
     display: none;
     flex-direction: column;
 }
@@ -1494,12 +1493,13 @@
 .iframe-top-bar {
     display: flex;
     align-items: center;
-    height: 56px;
-    padding: 0 8px;
-    background: #202124;
-    gap: 4px;
+    height: 72px;
+    padding: 0 10px;
+    background: #131313;
+    gap: 6px;
     flex-shrink: 0;
-    border-bottom: 1px solid #3c4043;
+    border-bottom: 1px solid #2a2a2a;
+    direction: ltr;
 }
 
 .iframe-dots-btn,
@@ -1550,13 +1550,13 @@
 
 .iframe-address-pill {
     flex: 1;
-    height: 36px;
-    background: #3c4043;
-    border-radius: 18px;
+    height: 48px;
+    background: #353535;
+    border-radius: 24px;
     display: flex;
     align-items: center;
-    padding: 0 16px;
-    margin: 0 6px;
+    padding: 0 18px;
+    margin: 0 4px;
     overflow: hidden;
     min-width: 0;
 }
@@ -1580,4 +1580,112 @@
 
 body.iframe-mode {
     overflow: hidden;
+}
+
+
+/* Editable address bar */
+.iframe-address-pill {
+    cursor: text;
+}
+.iframe-address-input {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #e8eaed;
+    font-size: 14px;
+    padding: 0;
+    direction: ltr;
+    text-align: left;
+}
+.iframe-address-pill.editing {
+    background: #1a1a1a;
+    border: 1px solid #5f6368;
+}
+
+/* Tabs overview page */
+.tabs-overview {
+    position: absolute;
+    top: 72px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #131313;
+    z-index: 10;
+    display: none;
+    flex-direction: column;
+    overflow-y: auto;
+}
+.tabs-overview.active {
+    display: flex;
+}
+.tabs-overview-header {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #3c4043;
+}
+.tabs-overview-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #e8eaed;
+}
+.tabs-list {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.tab-item {
+    background: #2a2a2a;
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    color: #e8eaed;
+}
+.tab-item.active-tab {
+    background: #1a73e8;
+}
+.tab-item .tab-title {
+    flex: 1;
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.tab-close {
+    background: transparent;
+    border: none;
+    color: #aaa;
+    font-size: 20px;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.tab-close:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+.new-tab-btn {
+    margin: 16px;
+    padding: 14px;
+    background: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.new-tab-btn:hover {
+    background: #1557b0;
 }
